@@ -2,7 +2,7 @@ use aiken/collection/dict
 use aiken/collection/list
 use aiken/collection/pairs
 use cardano/assets.{PolicyId, tokens}
-use cardano/transaction.{OutputReference, Transaction}
+use cardano/transaction.{OutputReference, Transaction, find_input}
 
 pub type Action {
   Mint
@@ -14,11 +14,8 @@ validator instamint(ref: OutputReference) {
     let amounts = tokens(self.mint, policy) |> dict.to_pairs |> pairs.values
     when action is {
       Mint -> {
-        expect Some(first_input) = list.at(self.inputs, 0)
-        and {
-          first_input.output_reference == ref,
-          amounts |> list.all(fn(n) { n > 0 }),
-        }
+        expect Some(_) = find_input(self.inputs, ref)
+        amounts |> list.all(fn(n) { n > 0 })
       }
       Burn -> amounts |> list.all(fn(n) { n < 0 })
     }
